@@ -3,6 +3,8 @@ from flask import request
 import os
 from bot import ObjectDetectionBot
 import json
+import boto3
+from botocore.exceptions import ClientError
 
 app = flask.Flask(__name__)
 
