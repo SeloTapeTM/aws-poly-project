@@ -32,7 +32,7 @@ def get_secret():
     return json.loads(secret)
 
 
-# TODO load TELEGRAM_TOKEN value from Secret Manager
+# load TELEGRAM_TOKEN value from Secret Manager
 secrets = get_secret()
 TELEGRAM_TOKEN = secrets["TELEGRAM_TOKEN"]  # os.environ['TELEGRAM_TOKEN']
 

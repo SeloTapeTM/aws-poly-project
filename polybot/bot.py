@@ -93,19 +93,99 @@ class Bot:
 
 
 class ObjectDetectionBot(Bot):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, token, telegram_chat_url):
+        super().__init__(token, telegram_chat_url)
+        self.processing_completed = True
         self.s3_client = boto3.client('s3')
 
     def handle_message(self, msg):
         logger.info(f'Incoming message: {msg}')
+        if "photo" in msg:
+            # If the message contains a photo, check if it also has a caption
+            if "caption" in msg:
+                caption = msg["caption"]
+                if "blur" in caption.lower() or "טשטוש" in caption.lower():
+                    logger.info("Received photo with blur caption.")
+                    self.process_image_blur(msg)
+                elif "contour" in caption.lower() or "קווי מתאר" in caption.lower():
+                    logger.info("Received photo with contour caption.")
+                    self.process_image_contur(msg)
+                elif ("salt n pepper" in caption.lower() or "salt and pepper" in caption.lower()
+                      or "מלח פלפל" in caption.lower()):
+                    logger.info("Received photo with salt n pepper caption.")
+                    self.process_image_salt_n_pepper(msg)
+                elif "segment" in caption.lower() or "חלוקה" in caption.lower():
+                    logger.info("Received photo with segment caption.")
+                    self.process_image_segment(msg)
+                elif "detect" in caption.lower() or "זיהוי" in caption.lower():
+                    logger.info("Received photo with detect caption.")
+                    self.detect_objects_in_img(msg)
+                else:
+                    logger.info("Received photo with wrong caption.")
+                    response = (f'Oh no!\nThe filter that you\'ve specified does not exist yet.\n Please send it again '
+                                f'with the fiter you want to apply in the \"caption\" of the picture from the list of f'
+                                f'ilters.\n\nFor the list of available filters you can type \"/actions\"')
+                    self.send_text(msg['chat']['id'], response)
 
-        if self.is_current_msg_photo(msg):
-            photo_path = self.download_user_photo(msg)
-            bucket =
-            img_name = f'{msg["chat"]["id"]}.jpeg'
-            # TODO upload the photo to S3
-            upload_response = upload_file(photo_path, bucket, img_name)
+            else:
+                logger.info("Received photo without a caption.")
+                response = (f'Oh no!\nThe photo that you\'ve sent does not contain any filters in the caption.\n Please'
+                            f' send it again with the fiter you want to apply in the \"caption\" of the picture.\n\nFor'
+                            f' the list of available filters you can type \"/actions\"')
+                self.send_text(msg['chat']['id'], response)
+        elif "text" in msg:
+            message = msg['text'].lower()
+            if '/start' in message:
+                logger.info("Received text with command /start.")
+                response = (f'Oh, Hi there!\nWelcome to Omer\'s Image Processing Bot!\n\nFor information on how to use '
+                            f'the bot type \"/help\".\nFor the list of actions type \"/actions\".')
+                self.send_text(msg['chat']['id'], response)
+            elif '/help' in message:
+                logger.info("Received text with command /help.")
+                response = (f'In order to use the bot properly you should send any photo, and in the \"caption'
+                            f'\" type in the name of the action you want to apply.\n\nFor the list of actions available'
+                            f' right now you can type \"/actions\".')
+                self.send_text(msg['chat']['id'], response)
+            elif '/actions' in message:
+                logger.info("Received text with command /actions.")
+                response = (f'The list of actions\\filters is:\n\nBlur - Blurs the image.\nContour - Shows only outline'
+                            f's.\nSalt n Pepper - Randomly place white and black pixels over the picture.\nSegment -'
+                            f' Makes all the bright parts white and all the dark parts black.\n\nNEW!!!\nDetect - detec'
+                            f'ts objects in the given photo and prints what\'s detected. \n\nFor information on how'
+                            f' to use the actions you can type \"/help\".')
+                self.send_text(msg['chat']['id'], response)
+            elif 'i hate you' in message:
+                logger.info("Received text that says \"i hate you\".")
+                response = f'You\'ve insulted me! And that is not nice at all.. You should be ashamed of yourself.'
+                self.send_text(msg['chat']['id'], response)
+            elif 'i love you' in message:
+                logger.info("Received text that says \"i love you\".")
+                response = f'Awwww, I love you too! <3 XOXO'
+                self.send_text(msg['chat']['id'], response)
+            elif 'supercalifragilisticexpialidocious' in message:
+                logger.info("Received easteregg.")
+                response = f'https://boulderbugle.com/super-secret-easter-egg-39tz7pni'
+                self.send_text(msg['chat']['id'], response)
+            elif 'supercalifragilisticexpialodocious' in message:
+                logger.info("Received easteregg.")
+                response = f'https://boulderbugle.com/super-secret-easter-egg-39tz7pni'
+                self.send_text(msg['chat']['id'], response)
+            else:
+                response = (f'What you\'ve typed (\"{msg["text"]}\") is not a recognisable command.\n\nTry typing '
+                            f'\"/help\"')
+                self.send_text(msg['chat']['id'], response)
 
-            # TODO send a job to the SQS queue
-            # TODO send message to the Telegram end-user (e.g. Your image is being processed. Please wait...)
+    def detect_objects_in_img(self, msg):
+        photo_path = self.download_user_photo(msg)
+        bucket = 'omers3bucketpublic'
+        img_name = f'{msg["chat"]["id"]}.jpeg'
+        # upload the photo to S3
+        upload_response = upload_file(photo_path, bucket, img_name)
+        if not upload_response:
+            raise ClientError
+        else:
+            logger.info(f'Successfully uploaded {photo_path} to {bucket}/{img_name}')
+        # TODO send a job to the SQS queue
+
+        # TODO send message to the Telegram end-user (e.g. Your image is being processed. Please wait...)
+        self.send_text(msg['chat']['id'], 'Your image is now being processed. Please wait...')
