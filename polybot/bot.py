@@ -186,6 +186,29 @@ class ObjectDetectionBot(Bot):
         else:
             logger.info(f'Successfully uploaded {photo_path} to {bucket}/{img_name}')
         # TODO send a job to the SQS queue
+        time.sleep(3)
 
+        # Create an SQS client
+        sqs = boto3.client('sqs', region_name='eu-central-1')
+        # Your SQS queue URL (replace with your actual SQS queue URL)
+        queue_url = 'https://sqs.eu-central-1.amazonaws.com/352708296901/omerd-aws'
+
+        # Create a message with a custom message ID
+        message_body = str(msg["chat"]["id"])
+        message_id = img_name
+        response = sqs.send_message(
+            QueueUrl=queue_url,
+            MessageBody=message_body,
+            MessageAttributes={
+                'CustomMessageID': {
+                    'DataType': 'String',
+                    'StringValue': message_id
+                }
+            }
+        )
+        # Check for a successful response (optional)
+        if response['ResponseMetadata']['HTTPStatusCode'] == 200:
+            print(f"Message with ID {message_id} sent successfully.")
+        time.sleep(3)
         # TODO send message to the Telegram end-user (e.g. Your image is being processed. Please wait...)
         self.send_text(msg['chat']['id'], 'Your image is now being processed. Please wait...')
