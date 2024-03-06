@@ -7,6 +7,7 @@ from telebot.types import InputFile
 import logging
 import boto3
 from botocore.exceptions import ClientError
+from datetime import datetime
 
 
 # Static Helper Methods
@@ -178,8 +179,9 @@ class ObjectDetectionBot(Bot):
 
     def detect_objects_in_img(self, msg):
         photo_path = self.download_user_photo(msg)
+        photo_name = '.'.join(photo_path.split('.')[:-1])
         bucket = 'omers3bucketpublic'
-        img_name = f'{msg["chat"]["id"]}.jpeg'
+        img_name = f'{photo_name}-{datetime.now().strftime("%f")}.jpeg'
         # upload the photo to S3
         upload_response = upload_file(photo_path, bucket, img_name)
         if not upload_response:
