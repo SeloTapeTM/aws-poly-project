@@ -5,6 +5,7 @@ from bot import ObjectDetectionBot
 import json
 import boto3
 from botocore.exceptions import ClientError
+from loguru import logger
 
 app = flask.Flask(__name__)
 
@@ -56,7 +57,7 @@ def webhook():
 @app.route(f'/results/', methods=['GET'])
 def results():
     prediction_id = request.args.get('predictionId')
-
+    logger.info(f'prediction_id: {prediction_id}')
     # TODO use the prediction_id to retrieve results from DynamoDB and send to the end-user
 
     # Initialize the DynamoDB client
@@ -69,10 +70,10 @@ def results():
         'prediction_id': str(prediction_id)
         # Replace with the actual primary key attribute name and value
     }
-
+    logger.info(f'primary_key: {primary_key}')
     # Use the get_item method to fetch the item
     response = table.get_item(Key=primary_key)
-
+    logger.info(f'response: {response}')
     # Check if the item was found
     if 'Item' in response:
         item = response['Item']
