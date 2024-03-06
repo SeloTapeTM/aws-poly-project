@@ -59,7 +59,6 @@ def consume():
             receipt_handle = response['Messages'][0]['ReceiptHandle']
 
             # get dict
-            msg_body = {}
             msg_body = json.loads(response['Messages'][0]['Body'])
 
             # Use the ReceiptHandle as a prediction UUID
