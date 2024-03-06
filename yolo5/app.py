@@ -7,7 +7,38 @@ import yaml
 from loguru import logger
 import boto3
 from decimal import Decimal
-import os
+
+
+# Static Helper Methods
+def get_secret():
+    secret_name = "omerd-secret-tg"
+    region_name = "eu-central-1"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    secret = get_secret_value_response['SecretString']
+    return json.loads(secret)
+
+
+# load TELEGRAM_TOKEN value from Secret Manager
+secrets = get_secret()
+TELEGRAM_TOKEN = secrets["TELEGRAM_TOKEN"]  # os.environ['TELEGRAM_TOKEN']
+
+TELEGRAM_APP_URL = secrets["TELEGRAM_APP_URL"]  # os.environ['TELEGRAM_APP_URL']
 
 images_bucket = 'omers3bucketpublic'
 queue_name = 'omerd-aws'
@@ -115,7 +146,7 @@ def consume():
                 table.put_item(Item=prediction_summary)
 
                 # TODO perform a GET request to Polybot to `/results` endpoint
-                requests.get(f'https://omerd-bot.devops-int-college.com:443/results?predictionId={prediction_id}&chatId={chat_id}')
+                requests.get(f'http://TELEGRAM_APP_URL/results?predictionId={prediction_id}&chatId={chat_id}')
 
             # Delete the message from the queue as the job is considered as DONE
             sqs_client.delete_message(QueueUrl=queue_name, ReceiptHandle=receipt_handle)
