@@ -1,3 +1,4 @@
+import json
 import telebot
 from loguru import logger
 import os
@@ -194,21 +195,16 @@ class ObjectDetectionBot(Bot):
         queue_url = 'https://sqs.eu-central-1.amazonaws.com/352708296901/omerd-aws'
 
         # Create a message with a custom message ID
-        message_body = str(msg["chat"]["id"])
-        message_id = img_name
+        chat_id = str(msg["chat"]["id"])
+        # message_id = img_name
+        msg_dict = {"chat_id": chat_id, "img_name": img_name}
         response = sqs.send_message(
             QueueUrl=queue_url,
-            MessageBody=message_body,
-            MessageAttributes={
-                'CustomMessageID': {
-                    'DataType': 'String',
-                    'StringValue': message_id
-                }
-            }
+            MessageBody=json.dumps(msg_dict)
         )
         # Check for a successful response (optional)
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
-            print(f"Message with ID {message_id} sent successfully.")
+            print(f"Message with img name {img_name} and chat ID {chat_id} sent successfully.")
         time.sleep(3)
         # TODO send message to the Telegram end-user (e.g. Your image is being processed. Please wait...)
         self.send_text(msg['chat']['id'], 'Your image is now being processed. Please wait...')

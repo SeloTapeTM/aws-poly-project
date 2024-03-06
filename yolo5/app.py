@@ -7,6 +7,7 @@ import yaml
 from loguru import logger
 import boto3
 from decimal import Decimal
+import os
 
 images_bucket = 'omers3bucketpublic'
 queue_name = 'omerd-aws'
@@ -20,10 +21,15 @@ with open("data/coco128.yaml", "r") as stream:
 def consume():
     while True:
         response = sqs_client.receive_message(QueueUrl=queue_name, MaxNumberOfMessages=1, WaitTimeSeconds=5)
+        logger.info(f'response: {response}')
 
         if 'Messages' in response:
             message = response['Messages'][0]['Body'].split(' ')[0]
             receipt_handle = response['Messages'][0]['ReceiptHandle']
+
+            # get dict
+            msg_body = {}
+            msg_body = json.loads(response['Messages'][0]['Body'])
 
             # Use the ReceiptHandle as a prediction UUID
             prediction_id = response['Messages'][0]['MessageId']
@@ -31,8 +37,9 @@ def consume():
             logger.info(f'prediction: {prediction_id}. start processing')
 
             # Receives a URL parameter representing the image to download from S3
-            img_name = message
-            chat_id = response['Messages'][0]['Body'].split(' ')[1]
+            img_name = msg_body["img_name"]
+            chat_id = msg_body["chat_id"]
+            logger.info(f'chat_id {chat_id}')
             original_img_path = img_name.split("/")[-1]
             s3_client = boto3.client('s3')
             logger.info(f'images_bucket {images_bucket} , img_name {img_name} ,'
@@ -55,7 +62,10 @@ def consume():
             # This is the path for the predicted image with labels The predicted image typically includes bounding
             # boxes drawn around the detected objects, along with class labels and possibly confidence scores.
             predicted_img_path = Path(f'static/data/{prediction_id}/{original_img_path}')
-            s3_client.upload_file(predicted_img_path, images_bucket, original_img_path)
+            predicted_img_name = f'predicted_{original_img_path}'
+            logger.info(f'before upload, gonna upload {predicted_img_path} with filename {predicted_img_name}')
+            s3_client.upload_file(predicted_img_path, images_bucket, predicted_img_name)
+            logger.info(f'Upload successful')
             # TODO Uploads the predicted image (predicted_img_path) to S3 (be careful not to override the original
             #  image).
 
@@ -96,7 +106,7 @@ def consume():
                     'time': Decimal(time.time()),
                     'detected_objects': summary_label
                 }
-
+                logger.info(f'prediction summery:\n\n {prediction_summary}')
                 # TODO store the prediction_summary in a DynamoDB table
                 dynamodb = boto3.resource('dynamodb', region_name='eu-central-1')
                 table_name = 'omerd-aws'
@@ -104,8 +114,8 @@ def consume():
                 table.put_item(Item=prediction_summary)
 
                 # TODO perform a GET request to Polybot to `/results` endpoint
-                requests.get(f'https://omerd-bot.devops-int-college.com:8443/results?predictionId={prediction_id}'
-                             f'&chatId={chat_id}')
+                requests.get(f'https://omerd-bot.devops-int-college.com/results?predictionId={prediction_id}&chatId'
+                             f'={chat_id}')
 
             # Delete the message from the queue as the job is considered as DONE
             sqs_client.delete_message(QueueUrl=queue_name, ReceiptHandle=receipt_handle)
