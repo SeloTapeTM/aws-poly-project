@@ -207,6 +207,7 @@ class ObjectDetectionBot(Bot):
         # Check for a successful response (optional)
         if response['ResponseMetadata']['HTTPStatusCode'] == 200:
             print(f"Message with img name {img_name} and chat ID {chat_id} sent successfully.")
+            logger.info(f"Message with img name {img_name} and chat ID {chat_id} sent successfully.")
         time.sleep(3)
         # TODO send message to the Telegram end-user (e.g. Your image is being processed. Please wait...)
         self.send_text(msg['chat']['id'], 'Your image is now being processed. Please wait...')
