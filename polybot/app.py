@@ -86,8 +86,9 @@ def results():
 
     chat_id = item['chat_id']
     text_results = item['detected_objects']
+    text_msg = f'This is what I\'ve found in the picture that you\'ve sent me:\n\n{text_results}'
 
-    bot.send_text(chat_id, text_results)
+    bot.send_text(chat_id, text_msg)
     return 'Ok'
 
 

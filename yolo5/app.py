@@ -92,7 +92,7 @@ def consume():
 
                 summary_label = ''
                 for key in labels_dic.keys():
-                    summary_label = summary_label + key + ": " + labels_dic[key].__str__() + " "
+                    summary_label = summary_label + key + ": " + labels_dic[key].__str__() + "\n"
 
                 logger.info(f'prediction: {prediction_id}/{original_img_path}. prediction summary:\n\n{labels}')
                 db_labels = json.loads(json.dumps(labels), parse_float=Decimal)
@@ -115,7 +115,7 @@ def consume():
                 table.put_item(Item=prediction_summary)
 
                 # TODO perform a GET request to Polybot to `/results` endpoint
-                requests.get(f'https://omerd-bot.devops-int-college.com/results?predictionId={prediction_id}&chatId'
+                requests.get(f'https://omerd-bot.devops-int-college.com:443/results?predictionId={prediction_id}&chatId'
                              f'={chat_id}')
 
             # Delete the message from the queue as the job is considered as DONE
