@@ -101,10 +101,11 @@ def consume():
                 prediction_summary = {
                     'prediction_id': prediction_id,
                     'original_img_path': original_img_path,
-                    'predicted_img_path': predicted_img_path.__str__(),
+                    'predicted_img_path': predicted_img_name,
                     'labels': db_labels,
                     'time': Decimal(time.time()),
-                    'detected_objects': summary_label
+                    'detected_objects': summary_label,
+                    'chat_id': chat_id
                 }
                 logger.info(f'prediction summery:\n\n {prediction_summary}')
                 # TODO store the prediction_summary in a DynamoDB table
