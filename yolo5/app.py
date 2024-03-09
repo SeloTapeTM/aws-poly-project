@@ -145,10 +145,10 @@ def consume():
                 table.put_item(Item=prediction_summary)
 
                 # TODO perform a GET request to Polybot to `/results` endpoint
-                requests.get(
-                    f'https://{TELEGRAM_APP_URL}:443/results?predictionId={prediction_id}&chatId={chat_id}',
-                    verify=True
-                )
+                # requests.get(f'http://{TELEGRAM_APP_URL}/results?predictionId={prediction_id}&chatId={chat_id}')
+                logger.info(f'before post')
+                requests.get(f'https://omerd-bot.devops-int-college.com:443/results/?predictionId={prediction_id}&chatId={chat_id}')
+                logger.info(f'after post')
 
             # Delete the message from the queue as the job is considered as DONE
             sqs_client.delete_message(QueueUrl=queue_name, ReceiptHandle=receipt_handle)
