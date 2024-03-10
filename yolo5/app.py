@@ -147,6 +147,7 @@ def consume():
                 # TODO perform a GET request to Polybot to `/results` endpoint
                 # requests.get(f'http://{TELEGRAM_APP_URL}/results?predictionId={prediction_id}&chatId={chat_id}')
                 logger.info(f'before post')
+                time.sleep(2)
                 requests.get(f'https://omerd-bot.devops-int-college.com:443/results/?predictionId={prediction_id}&chatId={chat_id}')
                 logger.info(f'after post')
 
