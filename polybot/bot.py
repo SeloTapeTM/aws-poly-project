@@ -8,6 +8,7 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
+from img import img_proc
 
 
 # Static Helper Methods
@@ -210,3 +211,95 @@ class ObjectDetectionBot(Bot):
             logger.info(f"Message with img name {img_name} and chat ID {chat_id} sent successfully.")
         # TODO send message to the Telegram end-user (e.g. Your image is being processed. Please wait...)
         self.send_text(msg['chat']['id'], 'Your image is now being processed. Please wait...')
+
+    def process_image_segment(self, msg):
+        self.processing_completed = False
+        self.send_text(msg['chat']['id'], text=f'Processing...')
+
+        # Download the two photos sent by the user
+        image_path = self.download_user_photo(msg)
+
+        # Create two different Img objects from the downloaded images
+        image = img_proc.Img(image_path)
+
+        # Process the image using your custom methods (e.g., apply filter)
+        image.segment()  # rotate the image
+
+        # Save the processed image to the specified folder
+        processed_image_path = image.save_img()
+
+        if processed_image_path is not None:
+            # Send the processed image back to the user
+            self.send_text(msg['chat']['id'], text=f'Completed!\nHere\'s the result:')
+            self.send_photo(msg['chat']['id'], processed_image_path)
+
+        self.processing_completed = True
+
+    def process_image_blur(self, msg):
+        self.processing_completed = False
+        self.send_text(msg['chat']['id'], text=f'Processing...')
+
+        # Download the two photos sent by the user
+        image_path = self.download_user_photo(msg)
+
+        # Create two different Img objects from the downloaded images
+        image = img_proc.Img(image_path)
+
+        # Process the image using your custom methods (e.g., apply filter)
+        image.blur()  # Blurs the image
+
+        # Save the processed image to the specified folder
+        processed_image_path = image.save_img()
+
+        if processed_image_path is not None:
+            # Send the processed image back to the user
+            self.send_text(msg['chat']['id'], text=f'Completed!\nHere\'s the result:')
+            self.send_photo(msg['chat']['id'], processed_image_path)
+
+        self.processing_completed = True
+
+    def process_image_contur(self, msg):
+        self.processing_completed = False
+        self.send_text(msg['chat']['id'], text=f'Processing...')
+
+        # Download the two photos sent by the user
+        image_path = self.download_user_photo(msg)
+
+        # Create two different Img objects from the downloaded images
+        image = img_proc.Img(image_path)
+
+        # Process the image using your custom methods (e.g., apply filter)
+        image.contour()  # contur the image
+
+        # Save the processed image to the specified folder
+        processed_image_path = image.save_img()
+
+        if processed_image_path is not None:
+            # Send the processed image back to the user
+            self.send_text(msg['chat']['id'], text=f'Completed!\nHere\'s the result:')
+            self.send_photo(msg['chat']['id'], processed_image_path)
+
+        self.processing_completed = True
+
+    def process_image_salt_n_pepper(self, msg):
+        self.processing_completed = False
+        self.send_text(msg['chat']['id'], text=f'Processing...')
+
+        # Download the two photos sent by the user
+        image_path = self.download_user_photo(msg)
+
+        # Create two different Img objects from the downloaded images
+        image = img_proc.Img(image_path)
+
+        # Process the image using your custom methods (e.g., apply filter)
+        image.salt_n_pepper()  # rotate the image
+
+        # Save the processed image to the specified folder
+        processed_image_path = image.save_img()
+
+        if processed_image_path is not None:
+            # Send the processed image back to the user
+            self.send_text(msg['chat']['id'], text=f'Completed!\nHere\'s the result:')
+            self.send_photo(msg['chat']['id'], processed_image_path)
+
+        self.processing_completed = True
